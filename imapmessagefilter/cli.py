@@ -75,6 +75,136 @@ def cli():
 
 
 @cli.command()
+def info():
+    """Display comprehensive information about the IMAP Message Filter setup."""
+    import subprocess
+    from datetime import datetime
+    
+    click.echo("🔍 IMAP Message Filter - System Information")
+    click.echo("=" * 60)
+    
+    # Configuration files
+    click.echo("\n📁 Configuration Files:")
+    config_path = AppConfig.get_default_config_path()
+    filters_path = AppConfig.get_default_filters_path()
+    
+    click.echo(f"  Config: {config_path}")
+    if config_path.exists():
+        click.echo("    ✅ Exists")
+        # Show config summary
+        try:
+            app_config = AppConfig.load_config()
+            click.echo(f"    Server: {app_config.imap.host}:{app_config.imap.port}")
+            click.echo(f"    Username: {app_config.imap.username}")
+            click.echo(f"    SSL: {'Yes' if app_config.imap.use_ssl else 'No'}")
+        except Exception as e:
+            click.echo(f"    ⚠️  Error loading config: {e}")
+    else:
+        click.echo("    ❌ Not found")
+    
+    click.echo(f"  Filters: {filters_path}")
+    if filters_path.exists():
+        click.echo("    ✅ Exists")
+        # Count filters
+        try:
+            import yaml
+            with open(filters_path, 'r') as f:
+                filters_data = yaml.safe_load(f)
+                filter_count = len(filters_data.get('filters', []))
+                click.echo(f"    Filters loaded: {filter_count}")
+        except Exception as e:
+            click.echo(f"    ⚠️  Error reading filters: {e}")
+    else:
+        click.echo("    ❌ Not found")
+    
+    # Logging information
+    click.echo("\n📊 Logging Information:")
+    try:
+        app_config = AppConfig.load_config()
+        log_dir = Path(app_config.logging.log_directory).expanduser()
+        click.echo(f"  Log Directory: {log_dir}")
+        
+        if log_dir.exists():
+            log_files = list(log_dir.glob("imapmessagefilter.*.log*"))
+            if log_files:
+                total_size = sum(f.stat().st_size for f in log_files)
+                size_mb = total_size / (1024 * 1024)
+                click.echo(f"  Log Files: {len(log_files)}")
+                click.echo(f"  Total Size: {size_mb:.2f} MB")
+                
+                # Show recent log files
+                recent_logs = sorted(log_files, key=lambda x: x.stat().st_mtime, reverse=True)[:5]
+                click.echo("  Recent Log Files:")
+                for log_file in recent_logs:
+                    mtime = datetime.fromtimestamp(log_file.stat().st_mtime)
+                    size_kb = log_file.stat().st_size / 1024
+                    click.echo(f"    {log_file.name} ({size_kb:.1f} KB, {mtime.strftime('%Y-%m-%d %H:%M')})")
+            else:
+                click.echo("  No log files found")
+        else:
+            click.echo("  Log directory does not exist")
+    except Exception as e:
+        click.echo(f"  ⚠️  Error reading logging info: {e}")
+    
+    # Cron job information
+    click.echo("\n⏰ Cron Job Information:")
+    try:
+        # Check if crontab has any IMAP Message Filter entries
+        result = subprocess.run(['crontab', '-l'], capture_output=True, text=True)
+        if result.returncode == 0:
+            crontab_content = result.stdout
+            imap_lines = [line.strip() for line in crontab_content.split('\n') 
+                         if 'imapmessagefilter' in line and line.strip()]
+            
+            if imap_lines:
+                click.echo("  ✅ Cron jobs found:")
+                for i, line in enumerate(imap_lines, 1):
+                    click.echo(f"    {i}. {line}")
+            else:
+                click.echo("  ❌ No cron jobs found")
+                click.echo("  💡 To add a cron job, run: crontab -e")
+                click.echo("  📝 Example: 0 */2 * * * /home/username/bin/imapmessagefilter apply-filters --cron")
+        else:
+            click.echo("  ❌ No crontab found")
+            click.echo("  💡 To create a crontab, run: crontab -e")
+    except Exception as e:
+        click.echo(f"  ⚠️  Error checking cron jobs: {e}")
+    
+    # System information
+    click.echo("\n💻 System Information:")
+    click.echo(f"  Python Version: {sys.version.split()[0]}")
+    click.echo(f"  Platform: {sys.platform}")
+    
+    # Check if imapmessagefilter command is available
+    try:
+        result = subprocess.run(['which', 'imapmessagefilter'], capture_output=True, text=True)
+        if result.returncode == 0:
+            click.echo(f"  Command Location: {result.stdout.strip()}")
+        else:
+            click.echo("  Command Location: Not found in PATH")
+            click.echo("  💡 Run the install script to add to PATH")
+    except Exception:
+        click.echo("  Command Location: Unable to determine")
+    
+    # Quick reference
+    click.echo("\n📚 Quick Reference:")
+    click.echo("  Test Connection: imapmessagefilter test-connection")
+    click.echo("  List Messages: imapmessagefilter list-messages --limit 10")
+    click.echo("  Apply Filters: imapmessagefilter apply-filters --cron")
+    click.echo("  Filter Status: imapmessagefilter filter-status")
+    click.echo("  Test Filters: imapmessagefilter test-filters --dry-run")
+    click.echo("  View Logs: tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log")
+    
+    click.echo("\n🔗 Useful Commands:")
+    click.echo("  Edit Config: nano ~/.config/IMAPMessageFilter/config.yaml")
+    click.echo("  Edit Filters: nano ~/.config/IMAPMessageFilter/filters.yaml")
+    click.echo("  View Cron: crontab -l")
+    click.echo("  Edit Cron: crontab -e")
+    
+    click.echo("\n" + "=" * 60)
+
+
+@cli.command()
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),

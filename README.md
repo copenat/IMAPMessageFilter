@@ -551,11 +551,31 @@ imapmessagefilter apply-filters --cron
 imapmessagefilter apply-filters --filter-name "HDFC" --cron
 ```
 
+##### System Information
+Get a comprehensive overview of your setup:
+```bash
+imapmessagefilter info
+```
+
 ##### Filter Status
 Check the status of your filters:
 ```bash
 imapmessagefilter filter-status
 ```
+
+##### System Information
+Get comprehensive information about your setup:
+```bash
+imapmessagefilter info
+```
+
+This command displays:
+- Configuration file locations and status
+- Filter count and status
+- Log directory and file information
+- Cron job status
+- System information
+- Quick reference commands
 
 #### Understanding Filter vs Message Selection
 
