@@ -64,7 +64,22 @@ def setup_logging(config: AppConfig) -> None:
     logging.getLogger().setLevel(getattr(logging, config.logging.level))
 
 
-
+def output_message(message: str, config: AppConfig, level: str = "INFO") -> None:
+    """Output a message - logs in cron mode, uses click.echo in interactive mode."""
+    if config.logging.cron_mode:
+        # In cron mode, log the message
+        logger = logging.getLogger(__name__)
+        if level == "INFO":
+            logger.info(message)
+        elif level == "WARNING":
+            logger.warning(message)
+        elif level == "ERROR":
+            logger.error(message)
+        else:
+            logger.info(message)
+    else:
+        # In interactive mode, use click.echo
+        click.echo(message)
 
 
 @click.group()
@@ -725,7 +740,7 @@ def apply_filters(config: Optional[Path], dry_run: bool, limit: Optional[int], f
             total_messages, recent_messages = client.select_folder('INBOX')
             
             if total_messages == 0:
-                click.echo("No messages found in INBOX")
+                output_message("No messages found in INBOX", app_config)
                 return
             
             # Get messages to process
@@ -733,9 +748,9 @@ def apply_filters(config: Optional[Path], dry_run: bool, limit: Optional[int], f
             if limit:
                 message_ids = message_ids[-limit:]  # Process most recent messages first
             
-            click.echo(f"\n🚀 Applying filters to {len(message_ids)} messages in INBOX...")
-            click.echo(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
-            click.echo("-" * 60)
+            output_message(f"\n🚀 Applying filters to {len(message_ids)} messages in INBOX...", app_config)
+            output_message(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}", app_config)
+            output_message("-" * 60, app_config)
             
             processed_count = 0
             moved_count = 0
@@ -769,19 +784,19 @@ def apply_filters(config: Optional[Path], dry_run: bool, limit: Optional[int], f
                     
                     if matching_filters:
                         processed_count += 1
-                        click.echo(f"\n📧 Message {msg_id}:")
-                        click.echo(f"  From: {message_data.from_}")
-                        click.echo(f"  Subject: {message_data.subject}")
-                        click.echo(f"  Matches: {len(matching_filters)} filter(s)")
+                        output_message(f"\n📧 Message {msg_id}:", app_config)
+                        output_message(f"  From: {message_data.from_}", app_config)
+                        output_message(f"  Subject: {message_data.subject}", app_config)
+                        output_message(f"  Matches: {len(matching_filters)} filter(s)", app_config)
                         
                         # Execute actions for each matching filter
                         for filter_rule in matching_filters:
-                            click.echo(f"    • {filter_rule.name} (Priority: {filter_rule.priority})")
+                            output_message(f"    • {filter_rule.name} (Priority: {filter_rule.priority})", app_config)
                             
                             for action in filter_rule.actions:
                                 if action.type == 'move':
                                     target_folder = action.folder
-                                    click.echo(f"      → Move to: {target_folder}")
+                                    output_message(f"      → Move to: {target_folder}", app_config)
                                     
                                     if not dry_run:
                                         try:
@@ -790,48 +805,48 @@ def apply_filters(config: Optional[Path], dry_run: bool, limit: Optional[int], f
                                             # Move the message
                                             client.move_message(msg_id, target_folder)
                                             moved_count += 1
-                                            click.echo(f"        ✅ Moved successfully")
+                                            output_message(f"        ✅ Moved successfully", app_config)
                                         except Exception as e:
                                             error_msg = f"Failed to move message {msg_id}: {e}"
                                             errors.append(error_msg)
-                                            click.echo(f"        ❌ {error_msg}")
+                                            output_message(f"        ❌ {error_msg}", app_config, "ERROR")
                                     else:
-                                        click.echo(f"        [DRY RUN] Would move to {target_folder}")
+                                        output_message(f"        [DRY RUN] Would move to {target_folder}", app_config)
                                 
                                 elif action.type == 'delete':
-                                    click.echo(f"      → Delete message")
+                                    output_message(f"      → Delete message", app_config)
                                     
                                     if not dry_run:
                                         try:
                                             client.delete_message(msg_id)
                                             deleted_count += 1
-                                            click.echo(f"        ✅ Deleted successfully")
+                                            output_message(f"        ✅ Deleted successfully", app_config)
                                         except Exception as e:
                                             error_msg = f"Failed to delete message {msg_id}: {e}"
                                             errors.append(error_msg)
-                                            click.echo(f"        ❌ {error_msg}")
+                                            output_message(f"        ❌ {error_msg}", app_config, "ERROR")
                                     else:
-                                        click.echo(f"        [DRY RUN] Would delete message")
+                                        output_message(f"        [DRY RUN] Would delete message", app_config)
                                 
                                 elif action.type == 'mark':
                                     flag = action.flag
-                                    click.echo(f"      → Mark with: {flag}")
+                                    output_message(f"      → Mark with: {flag}", app_config)
                                     
                                     if not dry_run:
                                         try:
                                             client.mark_message(msg_id, flag)
                                             marked_count += 1
-                                            click.echo(f"        ✅ Marked with {flag}")
+                                            output_message(f"        ✅ Marked with {flag}", app_config)
                                         except Exception as e:
                                             error_msg = f"Failed to mark message {msg_id}: {e}"
                                             errors.append(error_msg)
-                                            click.echo(f"        ❌ {error_msg}")
+                                            output_message(f"        ❌ {error_msg}", app_config, "ERROR")
                                     else:
-                                        click.echo(f"        [DRY RUN] Would mark with {flag}")
+                                        output_message(f"        [DRY RUN] Would mark with {flag}", app_config)
                                 
                                 elif action.type == 'copy':
                                     target_folder = action.folder
-                                    click.echo(f"      → Copy to: {target_folder}")
+                                    output_message(f"      → Copy to: {target_folder}", app_config)
                                     
                                     if not dry_run:
                                         try:
@@ -839,32 +854,32 @@ def apply_filters(config: Optional[Path], dry_run: bool, limit: Optional[int], f
                                             client.create_folder_if_not_exists(target_folder)
                                             # Copy the message
                                             client.copy_message(msg_id, target_folder)
-                                            click.echo(f"        ✅ Copied successfully")
+                                            output_message(f"        ✅ Copied successfully", app_config)
                                         except Exception as e:
                                             error_msg = f"Failed to copy message {msg_id}: {e}"
                                             errors.append(error_msg)
-                                            click.echo(f"        ❌ {error_msg}")
+                                            output_message(f"        ❌ {error_msg}", app_config, "ERROR")
                                     else:
-                                        click.echo(f"        [DRY RUN] Would copy to {target_folder}")
+                                        output_message(f"        [DRY RUN] Would copy to {target_folder}", app_config)
                 
                 except Exception as e:
                     error_msg = f"Error processing message {msg_id}: {e}"
                     errors.append(error_msg)
-                    click.echo(f"❌ {error_msg}")
+                    output_message(f"❌ {error_msg}", app_config, "ERROR")
             
             # Summary
-            click.echo(f"\n📊 Filter Application Results:")
-            click.echo(f"Messages processed: {processed_count}")
-            click.echo(f"Messages moved: {moved_count}")
-            click.echo(f"Messages deleted: {deleted_count}")
-            click.echo(f"Messages marked: {marked_count}")
+            output_message(f"\n📊 Filter Application Results:", app_config)
+            output_message(f"Messages processed: {processed_count}", app_config)
+            output_message(f"Messages moved: {moved_count}", app_config)
+            output_message(f"Messages deleted: {deleted_count}", app_config)
+            output_message(f"Messages marked: {marked_count}", app_config)
             
             if errors:
-                click.echo(f"\n❌ Errors ({len(errors)}):")
+                output_message(f"\n❌ Errors ({len(errors)}):", app_config, "ERROR")
                 for error in errors[:5]:  # Show first 5 errors
-                    click.echo(f"  • {error}")
+                    output_message(f"  • {error}", app_config, "ERROR")
                 if len(errors) > 5:
-                    click.echo(f"  ... and {len(errors) - 5} more errors")
+                    output_message(f"  ... and {len(errors) - 5} more errors", app_config, "ERROR")
         
         logger.info("Filter application completed")
         
