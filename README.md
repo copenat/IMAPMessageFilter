@@ -13,188 +13,14 @@ The existing Thunderbird config, including message filters, can be used in setup
 
 ## Requirements
 
-### Functional Requirements
-
-#### Core Functionality
-- **IMAP Connection Management**
-  - Connect to remote mail servers using IMAP protocol
-  - Support for IMAP over SSL/TLS (IMAPS) for enhanced security
-  - Handle connection authentication with username/password or OAuth2
-  - Implement connection pooling and retry mechanisms
-  - Graceful handling of network timeouts and connection failures
-
-#### Message Filtering
-- **Filter Rule Engine**
-  - Support multiple filter criteria:
-    - Sender email address/domain
-    - Subject line content (exact match, contains, regex)
-    - Message body content (keyword search, regex)
-    - Message size
-    - Date received
-    - Header fields (To, CC, BCC, etc.)
-    - Attachment presence/type
-  - Boolean logic support (AND, OR, NOT combinations)
-  - Priority-based rule ordering
-  - Case-sensitive and case-insensitive matching options
-
-#### Folder Management
-- **Target Folder Operations**
-  - Create destination folders if they don't exist
-  - Support nested folder structures
-  - Handle folder naming conflicts
-  - Maintain folder hierarchy across sessions
-
-#### Message Operations
-- **Email Processing**
-  - Move messages from Inbox to target folders
-  - Copy messages (optional)
-  - Mark messages as read/unread
-  - Add/remove message flags
-  - Delete messages (optional)
-  - Preserve message metadata and attachments
-
-### Technical Requirements
-
-#### Security
-- **Authentication & Encryption**
-  - Support for IMAPS (IMAP over SSL/TLS)
-  - OAuth2 authentication support
-  - Secure credential storage (environment variables, config files)
-  - Certificate validation for SSL connections
-  - No hardcoded credentials in source code
-
-#### Configuration Management
-- **Configuration System**
-  - YAML/JSON configuration files
-  - Environment variable support for sensitive data
-  - Multiple server configurations
-  - Filter rule definitions
-  - Logging configuration
-  - Error handling preferences
-
-#### Logging & Monitoring
-- **Observability**
-  - Comprehensive logging (INFO, WARNING, ERROR, DEBUG levels)
-  - Structured logging with timestamps
-  - Log rotation and size management
-  - Performance metrics collection
-  - Error reporting and alerting capabilities
-
-#### Performance
-- **Efficiency**
-  - Batch processing of messages
-  - Configurable batch sizes
-  - Memory-efficient message handling
-  - Timeout handling for long operations
-  - Resource cleanup after operations
-
-### Implementation Requirements
-
-#### Python Environment
-- **Language & Runtime**
-  - Python 3.11+ compatibility
-  - Use of modern Python features (type hints, dataclasses, etc.)
-  - Async/await support for concurrent operations
-  - Proper exception handling and error recovery
-
-#### Dependencies
-- **External Libraries**
-  - `imaplib` or `imapclient` for IMAP operations
-  - `email` for message parsing
-  - `yaml` or `json` for configuration
-  - `logging` for structured logging
-  - `asyncio` for async operations
-  - `pydantic` for data validation
-  - `click` or `argparse` for CLI interface
-
-#### Command Line Interface
-- **CLI Features**
-  - Configuration file specification
-  - Verbose/debug mode
-  - Dry-run mode for testing
-  - Single-run vs daemon mode
-  - Help and usage information
-  - Version information
-
-#### System Integration
-- **Deployment**
-  - Systemd service file for Linux startup
-  - Cron job configuration examples
-  - Docker containerization support
-  - Configuration file templates
-  - Installation scripts
-
-### Non-Functional Requirements
-
-#### Reliability
-- **Error Handling**
-  - Graceful degradation on partial failures
-  - Retry mechanisms with exponential backoff
-  - Transaction-like operations for message moves
-  - Rollback capabilities for failed operations
-
-#### Scalability
-- **Performance**
-  - Support for large mailboxes (100k+ messages)
-  - Efficient memory usage
-  - Configurable processing limits
-  - Background processing capabilities
-
-#### Maintainability
-- **Code Quality**
-  - Comprehensive unit tests
-  - Integration tests
-  - Code documentation
-  - Type hints throughout
-  - Modular architecture
-
-#### Usability
-- **User Experience**
-  - Clear error messages
-  - Progress indicators for long operations
-  - Configuration validation
-  - Example configurations
-  - Troubleshooting guide
-
-## Development Phases
-
-### Phase 1: Core IMAP Connectivity ✅
-- Basic IMAP connection and authentication
-- Simple message listing and retrieval
-- Configuration file parsing
-- CLI interface with connection testing and message listing
-- Comprehensive error handling and logging
-- **Thunderbird configuration extraction** - Extract IMAP settings from Thunderbird profiles
-- **External configuration management** - Store config in `~/.config/IMAPMessageFilter/`
-
-### Phase 2: Filter Engine & Thunderbird Integration ✅
-- **Thunderbird filter extraction** - Extract existing message filters from Thunderbird
-- **Filter configuration parsing** - Read and parse `filters.yaml` format
-- **Filter rule implementation** - Support for conditions and actions
-- **Message matching logic** - Match emails against filter conditions
-- **Folder creation and management** - Create target folders as needed
-- **Filter validation** - Validate filter rules and syntax
-
-### Phase 3: Message Operations
-- Message moving functionality using extracted filter rules
-- Error handling and logging for filter operations
-- CLI interface for filter management
-- **Filter testing** - Test filters against existing messages
-- **Dry-run mode** - Preview filter actions without executing
-
-### Phase 4: Advanced Features
-- Complex filter rules (AND/OR logic, multiple conditions)
-- Performance optimizations for large mailboxes
-- **Filter import/export** - Backup and restore filter configurations
-- **Filter templates** - Pre-built filter templates for common use cases
-- System integration (cron jobs, systemd services)
-
-### Phase 5: Production Readiness
-- Comprehensive testing with real filter scenarios
-- Documentation and user guides
-- Deployment automation
-- **Filter monitoring** - Track filter effectiveness and performance
-- **Filter analytics** - Statistics on filter usage and results
+- **Python 3.11+** with modern features (type hints, dataclasses)
+- **IMAP support** via `imapclient` library
+- **YAML configuration** with `pydantic` validation
+- **CLI interface** using `click`
+- **Secure credential storage** (environment variables, external config)
+- **Comprehensive logging** with rotation and monitoring
+- **Thunderbird integration** for configuration extraction
+- **Cron job support** for automated execution
 
 ## Getting Started
 
@@ -258,7 +84,6 @@ uv run python main.py --help
 ```
 
 **Note:** With manual installation, you'll need to use `uv run python main.py` for all commands instead of the `imapmessagefilter` wrapper.
-```
 
 ### Configuration
 The application uses `~/.config/IMAPMessageFilter/` as the default configuration directory:
@@ -668,29 +493,6 @@ cat ~/.config/IMAPMessageFilter/logs/imapmessagefilter.20250813.log
 tail -f /path/to/custom/logs/imapmessagefilter.$(date +%Y%m%d).log
 ```
 
-### Development
-
-#### Running Tests
-```bash
-uv run pytest tests/
-```
-
-#### Code Formatting
-```bash
-uv run black imapmessagefilter/ tests/
-uv run isort imapmessagefilter/ tests/
-```
-
-#### Type Checking
-```bash
-uv run mypy imapmessagefilter/
-```
-
-#### Linting
-```bash
-uv run ruff check imapmessagefilter/ tests/
-```
-
 ## Contributing
 
 Please read the contributing guidelines before submitting pull requests.
@@ -730,3 +532,43 @@ The next phase will implement the filter processing engine with:
 ## License
 
 [Add license information here]
+
+## Development Phases
+
+### Phase 1: Core IMAP Connectivity ✅
+- Basic IMAP connection and authentication
+- Simple message listing and retrieval
+- Configuration file parsing
+- CLI interface with connection testing and message listing
+- Comprehensive error handling and logging
+- **Thunderbird configuration extraction** - Extract IMAP settings from Thunderbird profiles
+- **External configuration management** - Store config in `~/.config/IMAPMessageFilter/`
+
+### Phase 2: Filter Engine & Thunderbird Integration ✅
+- **Thunderbird filter extraction** - Extract existing message filters from Thunderbird
+- **Filter configuration parsing** - Read and parse `filters.yaml` format
+- **Filter rule implementation** - Support for conditions and actions
+- **Message matching logic** - Match emails against filter conditions
+- **Folder creation and management** - Create target folders as needed
+- **Filter validation** - Validate filter rules and syntax
+
+### Phase 3: Message Operations ✅
+- Message moving functionality using extracted filter rules
+- Error handling and logging for filter operations
+- CLI interface for filter management
+- **Filter testing** - Test filters against existing messages
+- **Dry-run mode** - Preview filter actions without executing
+
+### Phase 4: Advanced Features ✅
+- Complex filter rules (AND/OR logic, multiple conditions)
+- Performance optimizations for large mailboxes
+- **Filter import/export** - Backup and restore filter configurations
+- **Filter templates** - Pre-built filter templates for common use cases
+- System integration (cron jobs, systemd services)
+
+### Phase 5: Production Readiness ✅
+- Comprehensive testing with real filter scenarios
+- Documentation and user guides
+- Deployment automation
+- **Filter monitoring** - Track filter effectiveness and performance
+- **Filter analytics** - Statistics on filter usage and results
