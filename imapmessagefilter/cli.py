@@ -294,7 +294,7 @@ def info():
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),
-    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+    help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 def test_connection(config: Optional[Path], verbose: bool):
@@ -342,7 +342,7 @@ def test_connection(config: Optional[Path], verbose: bool):
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),
-    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+    help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--folder', '-f', default='INBOX', help='Folder to list messages from')
 @click.option('--limit', '-l', type=int, help='Limit number of messages to show')
@@ -483,7 +483,7 @@ def setup_config():
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),
-    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+    help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 def list_folders(config: Optional[Path], verbose: bool):
@@ -528,7 +528,7 @@ def list_folders(config: Optional[Path], verbose: bool):
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),
-    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+    help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 def filter_status(config: Optional[Path], verbose: bool):
@@ -586,7 +586,7 @@ def filter_status(config: Optional[Path], verbose: bool):
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),
-    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+    help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing actions')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
@@ -685,7 +685,7 @@ def test_filters(config: Optional[Path], dry_run: bool, verbose: bool):
 @click.option(
     '--config', '-c',
     type=click.Path(path_type=Path),
-    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+    help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing actions')
 @click.option('--folder', default='INBOX', help='Folder to process (default: INBOX)')
