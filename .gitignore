@@ -4,8 +4,8 @@ config.yaml
 .env
 
 # Utility scripts
-extract_thunderbird_config.py
-extract_thunderbird_filters.py
+# extract_thunderbird_config.py
+# extract_thunderbird_filters.py
 
 # Python
 __pycache__/
