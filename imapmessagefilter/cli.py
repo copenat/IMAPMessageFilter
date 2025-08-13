@@ -688,13 +688,12 @@ def test_filters(config: Optional[Path], dry_run: bool, verbose: bool):
     help='Configuration file path (YAML). Defaults to ~/.local/IMAPMessageFilter/config.yaml'
 )
 @click.option('--dry-run', is_flag=True, help='Show what would be done without executing actions')
-@click.option('--folder', default='INBOX', help='Folder to process (default: INBOX)')
 @click.option('--limit', type=int, help='Limit number of messages to process')
 @click.option('--filter-name', help='Apply only a specific filter by name')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.option('--cron', is_flag=True, help='Enable cron mode (file logging, no console output)')
-def apply_filters(config: Optional[Path], dry_run: bool, folder: str, limit: Optional[int], filter_name: Optional[str], verbose: bool, cron: bool):
-    """Apply filters to messages and execute actions."""
+def apply_filters(config: Optional[Path], dry_run: bool, limit: Optional[int], filter_name: Optional[str], verbose: bool, cron: bool):
+    """Apply filters to messages in the INBOX and execute actions."""
     try:
         # Load configuration
         config_path = str(config) if config else None
@@ -715,18 +714,18 @@ def apply_filters(config: Optional[Path], dry_run: bool, folder: str, limit: Opt
         setup_logging(app_config)
         
         logger = logging.getLogger(__name__)
-        logger.info(f"Applying filters to folder: {folder}")
+        logger.info("Applying filters to INBOX folder")
         
         # Initialize filter engine
         filter_engine = FilterEngine(app_config.filters.filters_path)
         
         # Connect to IMAP server
         with IMAPClientWrapper(app_config.imap) as client:
-            # Select folder
-            total_messages, recent_messages = client.select_folder(folder)
+            # Always select INBOX folder
+            total_messages, recent_messages = client.select_folder('INBOX')
             
             if total_messages == 0:
-                click.echo(f"No messages found in {folder}")
+                click.echo("No messages found in INBOX")
                 return
             
             # Get messages to process
@@ -734,7 +733,7 @@ def apply_filters(config: Optional[Path], dry_run: bool, folder: str, limit: Opt
             if limit:
                 message_ids = message_ids[-limit:]  # Process most recent messages first
             
-            click.echo(f"\n🚀 Applying filters to {len(message_ids)} messages in {folder}...")
+            click.echo(f"\n🚀 Applying filters to {len(message_ids)} messages in INBOX...")
             click.echo(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
             click.echo("-" * 60)
             

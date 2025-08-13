@@ -335,7 +335,7 @@ imapmessagefilter test-filters --dry-run
 ```
 
 ##### Apply Filters
-Apply filter rules to process messages:
+Apply filter rules to process messages in the INBOX:
 ```bash
 imapmessagefilter apply-filters
 ```
@@ -346,7 +346,7 @@ imapmessagefilter apply-filters
 
 **Message Processing Options:**
 - `--limit N` - Process only the N most recent messages (e.g., `--limit 10`)
-- Without `--limit` - Process all messages in the folder
+- Without `--limit` - Process all messages in the INBOX
 
 **Cron Job Support:**
 - `--cron` - Enable cron mode (file logging, no console output)
@@ -425,7 +425,7 @@ This command displays:
 **Message Selection** (`--limit`):
 - Controls **how many emails** to process
 - Examples: `--limit 5`, `--limit 100`
-- When omitted: processes all messages in the folder
+- When omitted: processes all messages in the INBOX
 
 **Combined Examples:**
 ```bash
