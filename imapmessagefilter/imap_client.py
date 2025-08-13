@@ -199,9 +199,20 @@ class IMAPClientWrapper:
         """Delete a message."""
         try:
             self.client.delete_messages([message_id])
+            # Expunge to actually remove the deleted message
+            self.client.expunge()
             self.logger.info(f"Message {message_id} deleted successfully")
         except Exception as e:
             self.logger.error(f"Failed to delete message {message_id}: {e}")
+            raise
+    
+    def expunge_folder(self) -> None:
+        """Expunge deleted messages from the current folder."""
+        try:
+            self.client.expunge()
+            self.logger.info("Expunged deleted messages from current folder")
+        except Exception as e:
+            self.logger.error(f"Failed to expunge folder: {e}")
             raise
     
     def create_folder_if_not_exists(self, folder_name: str) -> None:
@@ -239,6 +250,7 @@ class IMAPClientWrapper:
                     self.logger.info(f"MOVE not supported, using COPY + DELETE for message {message_id}")
                     self.client.copy([message_id], imap_folder_name)
                     self.client.delete_messages([message_id])
+                    self.client.expunge()  # Expunge after copy+delete
                     self.logger.info(f"Message {message_id} copied to {imap_folder_name} and deleted from source")
                 else:
                     raise move_error
