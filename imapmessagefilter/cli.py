@@ -243,7 +243,11 @@ def setup_config():
         'logging': {
             'level': 'INFO',
             'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            'file': None
+            'log_directory': str(Path.home() / ".config" / "IMAPMessageFilter" / "logs"),
+            'file': None,
+            'max_size': 10,
+            'backup_count': 5,
+            'cron_mode': False
         },
         'filters': {
             'filters_path': str(AppConfig.get_default_filters_path())
@@ -489,7 +493,9 @@ def apply_filters(config: Optional[Path], dry_run: bool, folder: str, limit: Opt
             if not app_config.logging.file:
                 from datetime import datetime
                 today = datetime.now().strftime("%Y%m%d")
-                app_config.logging.file = f"~/.config/IMAPMessageFilter/logs/imapmessagefilter.{today}.log"
+                log_dir = Path(app_config.logging.log_directory).expanduser()
+                log_dir.mkdir(parents=True, exist_ok=True)
+                app_config.logging.file = str(log_dir / f"imapmessagefilter.{today}.log")
         setup_logging(app_config)
         
         logger = logging.getLogger(__name__)

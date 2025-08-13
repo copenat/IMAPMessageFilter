@@ -337,6 +337,27 @@ The script is interactive and will guide you through the process step by step.
 
 **Note**: You can also specify a custom configuration file path using the `--config` option with any command.
 
+#### Logging Configuration
+
+The logging section in `config.yaml` allows you to customize log behavior:
+
+```yaml
+logging:
+  level: INFO                    # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_directory: "~/.config/IMAPMessageFilter/logs"  # Directory for log files
+  file: null                     # Specific log file (null = use daily rotation)
+  max_size: 10                   # Maximum log file size in MB
+  backup_count: 5                # Number of backup files to keep
+  cron_mode: false               # Enable cron-specific logging
+```
+
+**Log Directory**: Configure where log files are stored. Default is `~/.config/IMAPMessageFilter/logs/`.
+
+**Daily Rotation**: When `file` is set to `null` (default), logs are automatically rotated daily with filenames like `imapmessagefilter.20250813.log`.
+
+**Log Rotation**: When a log file reaches `max_size` MB, it's rotated and `backup_count` old files are kept.
+
 ### Filter Management
 
 #### Extract Filters from Thunderbird
@@ -504,9 +525,10 @@ imapmessagefilter apply-filters
 
 **Cron Job Support:**
 - `--cron` - Enable cron mode (file logging, no console output)
-- Automatically creates daily log files in `~/.config/IMAPMessageFilter/logs/`
+- Automatically creates daily log files in configurable log directory
 - Daily log files: `imapmessagefilter.YYYYMMDD.log` (e.g., `imapmessagefilter.20250813.log`)
 - Includes log rotation (10MB max, 5 backup files per day)
+- Log directory configurable in `config.yaml` under `logging.log_directory`
 
 **Examples:**
 ```bash
@@ -586,7 +608,7 @@ crontab -e
 ```
 
 #### Log Monitoring
-Cron jobs create daily logs in `~/.config/IMAPMessageFilter/logs/`:
+Cron jobs create daily logs in the configured log directory (default: `~/.config/IMAPMessageFilter/logs/`):
 ```bash
 # View today's logs
 tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
@@ -599,6 +621,9 @@ ls -la ~/.config/IMAPMessageFilter/logs/
 
 # View logs from a specific date
 cat ~/.config/IMAPMessageFilter/logs/imapmessagefilter.20250813.log
+
+# Custom log directory (if configured differently)
+tail -f /path/to/custom/logs/imapmessagefilter.$(date +%Y%m%d).log
 ```
 
 ### Development
