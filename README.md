@@ -4,7 +4,12 @@ A Python-based mail filtering utility that connects to remote mail servers using
 
 ## Overview
 
-IMAPMessageFilter is designed to run as a command-line utility that can be scheduled to run on system startup or as a cron job on Linux hosts. It provides secure, automated email organization by moving messages from the Inbox to appropriate folders based on user-defined filtering rules.
+IMAPMessageFilter is designed to run as a command-line utility that can be scheduled to run on system startup or as a scheduled job. It provides secure, automated email organization by moving messages from the Inbox to appropriate folders based on user-defined filtering rules.
+
+## Use Case
+
+Thunderbird desktop users can configure and run message filters but Thunderbird mobile users cannot. This application can periodically run, on a home or cloud server, and execute the configured message filters. 
+The existing Thunderbird config, including message filters, can be used in setup phase to reduce manual updates.
 
 ## Requirements
 
