@@ -9,6 +9,7 @@ import click
 
 from .config import AppConfig
 from .imap_client import IMAPClientWrapper, IMAPConnectionError, IMAPAuthenticationError
+from .filter_engine import FilterEngine, MessageData
 
 
 def setup_logging(config: AppConfig) -> None:
@@ -252,6 +253,163 @@ def list_folders(config: Optional[Path], verbose: bool):
                 click.echo(f"  {folder}")
         
         logger.info("Folder listing completed")
+        
+    except FileNotFoundError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except (IMAPConnectionError, IMAPAuthenticationError) as e:
+        click.echo(f"Connection failed: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    '--config', '-c',
+    type=click.Path(path_type=Path),
+    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+)
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+def filter_status(config: Optional[Path], verbose: bool):
+    """Show the status of loaded filters."""
+    try:
+        # Load configuration
+        config_path = str(config) if config else None
+        app_config = AppConfig.load_config(config_path)
+        
+        # Setup logging
+        if verbose:
+            app_config.logging.level = "DEBUG"
+        setup_logging(app_config)
+        
+        logger = logging.getLogger(__name__)
+        logger.info("Checking filter status...")
+        
+        # Initialize filter engine
+        filter_engine = FilterEngine(app_config.filters.filters_path)
+        
+        # Get filter summary
+        summary = filter_engine.get_filter_summary()
+        
+        click.echo(f"\n📧 Filter Status")
+        click.echo(f"Total filters: {summary['total_filters']}")
+        click.echo(f"Enabled filters: {summary['enabled_filters']}")
+        click.echo(f"Filters file: {app_config.filters.filters_path}")
+        click.echo()
+        
+        if summary['filters']:
+            click.echo("📋 Filter Details:")
+            click.echo("-" * 60)
+            for filter_info in summary['filters']:
+                status = "✅ Enabled" if filter_info['enabled'] else "❌ Disabled"
+                click.echo(f"• {filter_info['name']} ({status})")
+                click.echo(f"  Priority: {filter_info['priority']}")
+                click.echo(f"  Conditions: {filter_info['conditions_count']}")
+                click.echo(f"  Actions: {filter_info['actions_count']}")
+                click.echo()
+        else:
+            click.echo("No filters found.")
+            click.echo("Use 'uv run python extract_thunderbird_filters.py' to extract filters from Thunderbird")
+        
+        logger.info("Filter status check completed")
+        
+    except FileNotFoundError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    '--config', '-c',
+    type=click.Path(path_type=Path),
+    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+)
+@click.option('--dry-run', is_flag=True, help='Show what would be done without executing actions')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+def test_filters(config: Optional[Path], dry_run: bool, verbose: bool):
+    """Test filters against existing messages."""
+    try:
+        # Load configuration
+        config_path = str(config) if config else None
+        app_config = AppConfig.load_config(config_path)
+        
+        # Setup logging
+        if verbose:
+            app_config.logging.level = "DEBUG"
+        setup_logging(app_config)
+        
+        logger = logging.getLogger(__name__)
+        logger.info("Testing filters against existing messages...")
+        
+        # Initialize filter engine
+        filter_engine = FilterEngine(app_config.filters.filters_path)
+        
+        # Connect to IMAP server
+        with IMAPClientWrapper(app_config.imap) as client:
+            # Select INBOX
+            total_messages, recent_messages = client.select_folder('INBOX')
+            
+            if total_messages == 0:
+                click.echo("No messages found in INBOX")
+                return
+            
+            # Get recent messages (limit to 10 for testing)
+            message_ids = client.search_messages("ALL")
+            test_messages = message_ids[-10:] if len(message_ids) > 10 else message_ids
+            
+            click.echo(f"\n🧪 Testing {len(test_messages)} messages against filters...")
+            click.echo(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
+            click.echo("-" * 60)
+            
+            matches_found = 0
+            
+            for msg_id in test_messages:
+                # Fetch message envelope
+                envelopes = client.fetch_message_envelope([msg_id])
+                if msg_id not in envelopes:
+                    continue
+                
+                envelope = envelopes[msg_id]
+                
+                # Create MessageData object
+                message_data = MessageData(
+                    from_=envelope.from_[0].mailbox.decode('utf-8', errors='ignore') if envelope.from_ else None,
+                    subject=envelope.subject.decode('utf-8', errors='ignore') if envelope.subject else None,
+                    date=envelope.date.isoformat() if envelope.date else None,
+                    size=envelope.size if hasattr(envelope, 'size') else None
+                )
+                
+                # Test against filters
+                matching_filters = filter_engine.match_message(message_data)
+                
+                if matching_filters:
+                    matches_found += 1
+                    click.echo(f"\n📧 Message {msg_id}:")
+                    click.echo(f"  From: {message_data.from_}")
+                    click.echo(f"  Subject: {message_data.subject}")
+                    click.echo(f"  Matches: {len(matching_filters)} filter(s)")
+                    
+                    for filter_rule in matching_filters:
+                        click.echo(f"    • {filter_rule.name} (Priority: {filter_rule.priority})")
+                        for action in filter_rule.actions:
+                            if action.type == 'move':
+                                click.echo(f"      → Move to: {action.folder}")
+                            elif action.type == 'delete':
+                                click.echo(f"      → Delete message")
+                            elif action.type == 'mark':
+                                click.echo(f"      → Mark with: {action.flag}")
+            
+            click.echo(f"\n📊 Test Results:")
+            click.echo(f"Messages tested: {len(test_messages)}")
+            click.echo(f"Messages matching filters: {matches_found}")
+            click.echo(f"Match rate: {(matches_found / len(test_messages) * 100):.1f}%")
+        
+        logger.info("Filter testing completed")
         
     except FileNotFoundError as e:
         click.echo(f"Error: {e}", err=True)
