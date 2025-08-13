@@ -198,6 +198,44 @@ The existing Thunderbird config, including message filters, can be used in setup
 
 ## Getting Started
 
+### Quick Install (Recommended)
+
+**One-command installation:**
+
+```bash
+curl -sSL https://raw.githubusercontent.com/copenat/IMAPMessageFilter/main/install.sh | bash
+```
+
+**Or download and run:**
+
+```bash
+# Download the install script
+curl -O https://raw.githubusercontent.com/copenat/IMAPMessageFilter/main/install.sh
+
+# Make it executable and run
+chmod +x install.sh
+./install.sh
+```
+
+**What the installer does:**
+- 📥 **Clones the repository** (if not already present)
+- 📦 **Installs Python dependencies** with `uv sync`
+- 📂 **Creates `~/bin` directory** if it doesn't exist
+- 🔧 **Adds `~/bin` to your PATH**
+- 🚀 **Creates executable `imapmessagefilter` command**
+- ✅ **Makes the tool available system-wide**
+
+**After installation, use the tool directly:**
+```bash
+imapmessagefilter --help
+imapmessagefilter test-connection
+imapmessagefilter filter-status
+```
+
+### Manual Installation
+
+If you prefer to install manually:
+
 ### Prerequisites
 - Python 3.11 or higher
 - Access to IMAP mail server
@@ -219,6 +257,9 @@ uv sync --extra dev
 uv run python main.py --help
 ```
 
+**Note:** With manual installation, you'll need to use `uv run python main.py` for all commands instead of the `imapmessagefilter` wrapper.
+```
+
 ### Configuration
 The application uses `~/.config/IMAPMessageFilter/` as the default configuration directory:
 
@@ -231,6 +272,11 @@ If you use Thunderbird, you can automatically extract your IMAP settings:
 ```bash
 # Extract settings from Thunderbird
 uv run python extract_thunderbird_config.py
+```
+
+**Note:** If you used the quick install, you can also run:
+```bash
+imapmessagefilter extract-config
 ```
 
 This will:
@@ -386,35 +432,35 @@ IMAPMessageFilter/
 ##### Test Connection
 Test your IMAP connection and authentication:
 ```bash
-uv run python main.py test-connection
+imapmessagefilter test-connection
 ```
 
 ##### List Folders
 List all available folders on your mail server:
 ```bash
-uv run python main.py list-folders
+imapmessagefilter list-folders
 ```
 
 ##### List Messages
 List messages from a specific folder:
 ```bash
 # List recent messages from INBOX
-uv run python main.py list-messages --folder INBOX --limit 10
+imapmessagefilter list-messages --folder INBOX --limit 10
 
 # List messages from a specific folder
-uv run python main.py list-messages --folder "Sent Items" --limit 5
+imapmessagefilter list-messages --folder "Sent Items" --limit 5
 ```
 
 ##### Verbose Logging
 Enable detailed logging for debugging:
 ```bash
-uv run python main.py test-connection --verbose
+imapmessagefilter test-connection --verbose
 ```
 
 ##### Custom Configuration
 Use a different configuration file:
 ```bash
-uv run python main.py test-connection --config /path/to/custom/config.yaml
+imapmessagefilter test-connection --config /path/to/custom/config.yaml
 ```
 
 #### Phase 2: Filter Management (Coming Soon)
@@ -422,7 +468,7 @@ uv run python main.py test-connection --config /path/to/custom/config.yaml
 ##### Test Filters
 Test your filter rules against existing messages:
 ```bash
-uv run python main.py test-filters --dry-run
+imapmessagefilter test-filters --dry-run
 ```
 
 **Options:**
@@ -433,19 +479,19 @@ uv run python main.py test-filters --dry-run
 **Examples:**
 ```bash
 # Test all filters against 10 recent messages (dry run)
-uv run python main.py test-filters --dry-run --limit 10
+imapmessagefilter test-filters --dry-run --limit 10
 
 # Test only the HDFC filter against all messages (dry run)
-uv run python main.py test-filters --dry-run --filter-name "HDFC"
+imapmessagefilter test-filters --dry-run --filter-name "HDFC"
 
 # Test all filters against all messages (dry run)
-uv run python main.py test-filters --dry-run
+imapmessagefilter test-filters --dry-run
 ```
 
 ##### Apply Filters
 Apply filter rules to process messages:
 ```bash
-uv run python main.py apply-filters
+imapmessagefilter apply-filters
 ```
 
 **Filter Selection Options:**
@@ -459,22 +505,22 @@ uv run python main.py apply-filters
 **Examples:**
 ```bash
 # Apply only the HDFC filter to the 5 most recent messages
-uv run python main.py apply-filters --filter-name "HDFC" --limit 5
+imapmessagefilter apply-filters --filter-name "HDFC" --limit 5
 
 # Apply all filters to the 10 most recent messages
-uv run python main.py apply-filters --limit 10
+imapmessagefilter apply-filters --limit 10
 
 # Apply only the India Tax filter to all messages
-uv run python main.py apply-filters --filter-name "India Tax"
+imapmessagefilter apply-filters --filter-name "India Tax"
 
 # Apply all filters to all messages (full processing)
-uv run python main.py apply-filters
+imapmessagefilter apply-filters
 ```
 
 ##### Filter Status
 Check the status of your filters:
 ```bash
-uv run python main.py filter-status
+imapmessagefilter filter-status
 ```
 
 #### Understanding Filter vs Message Selection
@@ -492,13 +538,13 @@ uv run python main.py filter-status
 **Combined Examples:**
 ```bash
 # Apply only HDFC filter to 5 recent emails
-uv run python main.py apply-filters --filter-name "HDFC" --limit 5
+imapmessagefilter apply-filters --filter-name "HDFC" --limit 5
 
 # Apply all filters to 10 recent emails  
-uv run python main.py apply-filters --limit 10
+imapmessagefilter apply-filters --limit 10
 
 # Apply only India Tax filter to ALL emails
-uv run python main.py apply-filters --filter-name "India Tax"
+imapmessagefilter apply-filters --filter-name "India Tax"
 ```
 
 ### Development
