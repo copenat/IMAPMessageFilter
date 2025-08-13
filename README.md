@@ -502,6 +502,11 @@ imapmessagefilter apply-filters
 - `--limit N` - Process only the N most recent messages (e.g., `--limit 10`)
 - Without `--limit` - Process all messages in the folder
 
+**Cron Job Support:**
+- `--cron` - Enable cron mode (file logging, no console output)
+- Automatically creates log files in `~/.config/IMAPMessageFilter/logs/`
+- Includes log rotation (10MB max, 5 backup files)
+
 **Examples:**
 ```bash
 # Apply only the HDFC filter to the 5 most recent messages
@@ -515,6 +520,12 @@ imapmessagefilter apply-filters --filter-name "India Tax"
 
 # Apply all filters to all messages (full processing)
 imapmessagefilter apply-filters
+
+# Run as cron job with file logging
+imapmessagefilter apply-filters --cron
+
+# Run specific filter as cron job
+imapmessagefilter apply-filters --filter-name "HDFC" --cron
 ```
 
 ##### Filter Status
@@ -545,6 +556,45 @@ imapmessagefilter apply-filters --limit 10
 
 # Apply only India Tax filter to ALL emails
 imapmessagefilter apply-filters --filter-name "India Tax"
+```
+
+### Cron Job Setup
+
+For automated email filtering, you can set up cron jobs to run the filter periodically:
+
+#### Basic Cron Job
+```bash
+# Edit your crontab
+crontab -e
+
+# Add a line to run filters every 15 minutes
+*/15 * * * * /home/username/bin/imapmessagefilter apply-filters --cron
+
+# Or run every hour
+0 * * * * /home/username/bin/imapmessagefilter apply-filters --cron
+```
+
+#### Advanced Cron Jobs
+```bash
+# Run specific filters at different times
+0 9 * * * /home/username/bin/imapmessagefilter apply-filters --filter-name "HDFC" --cron
+0 10 * * * /home/username/bin/imapmessagefilter apply-filters --filter-name "India Tax" --cron
+
+# Process only recent messages (faster execution)
+*/30 * * * * /home/username/bin/imapmessagefilter apply-filters --limit 50 --cron
+```
+
+#### Log Monitoring
+Cron jobs create logs in `~/.config/IMAPMessageFilter/logs/`:
+```bash
+# View recent logs
+tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.log
+
+# Check for errors
+grep ERROR ~/.config/IMAPMessageFilter/logs/imapmessagefilter.log
+
+# View log rotation
+ls -la ~/.config/IMAPMessageFilter/logs/
 ```
 
 ### Development

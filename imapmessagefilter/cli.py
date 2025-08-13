@@ -14,18 +14,57 @@ from .filter_engine import FilterEngine, MessageData
 
 def setup_logging(config: AppConfig) -> None:
     """Setup logging configuration."""
-    log_config = {
-        'level': getattr(logging, config.logging.level),
-        'format': config.logging.format,
-        'handlers': [logging.StreamHandler(sys.stdout)]
-    }
+    import logging.handlers
     
-    if config.logging.file:
-        log_config['handlers'].append(
-            logging.FileHandler(config.logging.file, encoding='utf-8')
+    # Clear any existing handlers
+    logging.getLogger().handlers.clear()
+    
+    # Create formatter
+    if config.logging.cron_mode:
+        # Cron mode: simple format without colors, with timestamp
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
         )
+    else:
+        # Interactive mode: use configured format
+        formatter = logging.Formatter(config.logging.format)
     
-    logging.basicConfig(**log_config)
+    # Create console handler (only if not in cron mode or if verbose)
+    if not config.logging.cron_mode or config.logging.level == "DEBUG":
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        logging.getLogger().addHandler(console_handler)
+    
+    # Create file handler if specified
+    if config.logging.file:
+        # Expand ~ to home directory
+        log_file = config.logging.file.replace('~', str(Path.home()))
+        
+        # Create log directory if it doesn't exist
+        log_dir = Path(log_file).parent
+        log_dir.mkdir(parents=True, exist_ok=True)
+        
+        if config.logging.max_size and config.logging.backup_count:
+            # Use rotating file handler
+            file_handler = logging.handlers.RotatingFileHandler(
+                log_file,
+                maxBytes=config.logging.max_size * 1024 * 1024,  # Convert MB to bytes
+                backupCount=config.logging.backup_count,
+                encoding='utf-8'
+            )
+        else:
+            # Use regular file handler
+            file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        
+        file_handler.setFormatter(formatter)
+        logging.getLogger().addHandler(file_handler)
+    
+    # Set log level
+    logging.getLogger().setLevel(getattr(logging, config.logging.level))
+
+
+
 
 
 @click.group()
@@ -410,6 +449,201 @@ def test_filters(config: Optional[Path], dry_run: bool, verbose: bool):
             click.echo(f"Match rate: {(matches_found / len(test_messages) * 100):.1f}%")
         
         logger.info("Filter testing completed")
+        
+    except FileNotFoundError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except (IMAPConnectionError, IMAPAuthenticationError) as e:
+        click.echo(f"Connection failed: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    '--config', '-c',
+    type=click.Path(path_type=Path),
+    help='Configuration file path (YAML). Defaults to ~/.config/IMAPMessageFilter/config.yaml'
+)
+@click.option('--dry-run', is_flag=True, help='Show what would be done without executing actions')
+@click.option('--folder', default='INBOX', help='Folder to process (default: INBOX)')
+@click.option('--limit', type=int, help='Limit number of messages to process')
+@click.option('--filter-name', help='Apply only a specific filter by name')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+@click.option('--cron', is_flag=True, help='Enable cron mode (file logging, no console output)')
+def apply_filters(config: Optional[Path], dry_run: bool, folder: str, limit: Optional[int], filter_name: Optional[str], verbose: bool, cron: bool):
+    """Apply filters to messages and execute actions."""
+    try:
+        # Load configuration
+        config_path = str(config) if config else None
+        app_config = AppConfig.load_config(config_path)
+        
+        # Setup logging
+        if verbose:
+            app_config.logging.level = "DEBUG"
+        if cron:
+            app_config.logging.cron_mode = True
+            # Set default log file if not specified
+            if not app_config.logging.file:
+                app_config.logging.file = "~/.config/IMAPMessageFilter/logs/imapmessagefilter.log"
+        setup_logging(app_config)
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"Applying filters to folder: {folder}")
+        
+        # Initialize filter engine
+        filter_engine = FilterEngine(app_config.filters.filters_path)
+        
+        # Connect to IMAP server
+        with IMAPClientWrapper(app_config.imap) as client:
+            # Select folder
+            total_messages, recent_messages = client.select_folder(folder)
+            
+            if total_messages == 0:
+                click.echo(f"No messages found in {folder}")
+                return
+            
+            # Get messages to process
+            message_ids = client.search_messages("ALL")
+            if limit:
+                message_ids = message_ids[-limit:]  # Process most recent messages first
+            
+            click.echo(f"\n🚀 Applying filters to {len(message_ids)} messages in {folder}...")
+            click.echo(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
+            click.echo("-" * 60)
+            
+            processed_count = 0
+            moved_count = 0
+            deleted_count = 0
+            marked_count = 0
+            errors = []
+            
+            for msg_id in message_ids:
+                try:
+                    # Fetch message envelope
+                    envelopes = client.fetch_message_envelope([msg_id])
+                    if msg_id not in envelopes:
+                        continue
+                    
+                    envelope = envelopes[msg_id]
+                    
+                    # Create MessageData object
+                    message_data = MessageData(
+                        from_=envelope.from_[0].mailbox.decode('utf-8', errors='ignore') if envelope.from_ else None,
+                        subject=envelope.subject.decode('utf-8', errors='ignore') if envelope.subject else None,
+                        date=envelope.date.isoformat() if envelope.date else None,
+                        size=envelope.size if hasattr(envelope, 'size') else None
+                    )
+                    
+                    # Test against filters
+                    matching_filters = filter_engine.match_message(message_data)
+                    
+                    # Filter by name if specified
+                    if filter_name:
+                        matching_filters = [f for f in matching_filters if f.name == filter_name]
+                    
+                    if matching_filters:
+                        processed_count += 1
+                        click.echo(f"\n📧 Message {msg_id}:")
+                        click.echo(f"  From: {message_data.from_}")
+                        click.echo(f"  Subject: {message_data.subject}")
+                        click.echo(f"  Matches: {len(matching_filters)} filter(s)")
+                        
+                        # Execute actions for each matching filter
+                        for filter_rule in matching_filters:
+                            click.echo(f"    • {filter_rule.name} (Priority: {filter_rule.priority})")
+                            
+                            for action in filter_rule.actions:
+                                if action.type == 'move':
+                                    target_folder = action.folder
+                                    click.echo(f"      → Move to: {target_folder}")
+                                    
+                                    if not dry_run:
+                                        try:
+                                            # Ensure target folder exists
+                                            client.create_folder_if_not_exists(target_folder)
+                                            # Move the message
+                                            client.move_message(msg_id, target_folder)
+                                            moved_count += 1
+                                            click.echo(f"        ✅ Moved successfully")
+                                        except Exception as e:
+                                            error_msg = f"Failed to move message {msg_id}: {e}"
+                                            errors.append(error_msg)
+                                            click.echo(f"        ❌ {error_msg}")
+                                    else:
+                                        click.echo(f"        [DRY RUN] Would move to {target_folder}")
+                                
+                                elif action.type == 'delete':
+                                    click.echo(f"      → Delete message")
+                                    
+                                    if not dry_run:
+                                        try:
+                                            client.delete_message(msg_id)
+                                            deleted_count += 1
+                                            click.echo(f"        ✅ Deleted successfully")
+                                        except Exception as e:
+                                            error_msg = f"Failed to delete message {msg_id}: {e}"
+                                            errors.append(error_msg)
+                                            click.echo(f"        ❌ {error_msg}")
+                                    else:
+                                        click.echo(f"        [DRY RUN] Would delete message")
+                                
+                                elif action.type == 'mark':
+                                    flag = action.flag
+                                    click.echo(f"      → Mark with: {flag}")
+                                    
+                                    if not dry_run:
+                                        try:
+                                            client.mark_message(msg_id, flag)
+                                            marked_count += 1
+                                            click.echo(f"        ✅ Marked with {flag}")
+                                        except Exception as e:
+                                            error_msg = f"Failed to mark message {msg_id}: {e}"
+                                            errors.append(error_msg)
+                                            click.echo(f"        ❌ {error_msg}")
+                                    else:
+                                        click.echo(f"        [DRY RUN] Would mark with {flag}")
+                                
+                                elif action.type == 'copy':
+                                    target_folder = action.folder
+                                    click.echo(f"      → Copy to: {target_folder}")
+                                    
+                                    if not dry_run:
+                                        try:
+                                            # Ensure target folder exists
+                                            client.create_folder_if_not_exists(target_folder)
+                                            # Copy the message
+                                            client.copy_message(msg_id, target_folder)
+                                            click.echo(f"        ✅ Copied successfully")
+                                        except Exception as e:
+                                            error_msg = f"Failed to copy message {msg_id}: {e}"
+                                            errors.append(error_msg)
+                                            click.echo(f"        ❌ {error_msg}")
+                                    else:
+                                        click.echo(f"        [DRY RUN] Would copy to {target_folder}")
+                
+                except Exception as e:
+                    error_msg = f"Error processing message {msg_id}: {e}"
+                    errors.append(error_msg)
+                    click.echo(f"❌ {error_msg}")
+            
+            # Summary
+            click.echo(f"\n📊 Filter Application Results:")
+            click.echo(f"Messages processed: {processed_count}")
+            click.echo(f"Messages moved: {moved_count}")
+            click.echo(f"Messages deleted: {deleted_count}")
+            click.echo(f"Messages marked: {marked_count}")
+            
+            if errors:
+                click.echo(f"\n❌ Errors ({len(errors)}):")
+                for error in errors[:5]:  # Show first 5 errors
+                    click.echo(f"  • {error}")
+                if len(errors) > 5:
+                    click.echo(f"  ... and {len(errors) - 5} more errors")
+        
+        logger.info("Filter application completed")
         
     except FileNotFoundError as e:
         click.echo(f"Error: {e}", err=True)

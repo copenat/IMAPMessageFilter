@@ -46,6 +46,9 @@ class LoggingConfig(BaseModel):
         description="Log format string"
     )
     file: Optional[str] = Field(None, description="Log file path")
+    max_size: Optional[int] = Field(10, description="Maximum log file size in MB")
+    backup_count: Optional[int] = Field(5, description="Number of backup log files to keep")
+    cron_mode: bool = Field(False, description="Enable cron-specific logging (timestamp, no colors)")
     
     @field_validator('level')
     @classmethod

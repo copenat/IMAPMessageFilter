@@ -195,6 +195,89 @@ class IMAPClientWrapper:
             self.logger.error(f"Failed to fetch message envelope: {e}")
             raise IMAPConnectionError(f"Failed to fetch envelope: {e}") from e
     
+    def delete_message(self, message_id: int) -> None:
+        """Delete a message."""
+        try:
+            self.client.delete_messages([message_id])
+            self.logger.info(f"Message {message_id} deleted successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to delete message {message_id}: {e}")
+            raise
+    
+    def create_folder_if_not_exists(self, folder_name: str) -> None:
+        """Create a folder if it doesn't exist."""
+        try:
+            # Convert forward slashes to dots for IMAP folder naming
+            imap_folder_name = folder_name.replace('/', '.')
+            
+            # Check if folder exists
+            folders = self.client.list_folders()
+            folder_exists = any(folder[2] == imap_folder_name for folder in folders)
+            
+            if not folder_exists:
+                self.client.create_folder(imap_folder_name)
+                self.logger.info(f"Created folder: {imap_folder_name}")
+            else:
+                self.logger.debug(f"Folder already exists: {imap_folder_name}")
+        except Exception as e:
+            self.logger.error(f"Failed to create folder {imap_folder_name}: {e}")
+            raise
+    
+    def move_message(self, message_id: int, target_folder: str) -> None:
+        """Move a message to another folder."""
+        try:
+            # Convert forward slashes to dots for IMAP folder naming
+            imap_folder_name = target_folder.replace('/', '.')
+            
+            # Try MOVE first, fallback to COPY + DELETE if not supported
+            try:
+                self.client.move([message_id], imap_folder_name)
+                self.logger.info(f"Message {message_id} moved to {imap_folder_name}")
+            except Exception as move_error:
+                if "MOVE capability" in str(move_error) or "not supported" in str(move_error):
+                    # Fallback: copy then delete
+                    self.logger.info(f"MOVE not supported, using COPY + DELETE for message {message_id}")
+                    self.client.copy([message_id], imap_folder_name)
+                    self.client.delete_messages([message_id])
+                    self.logger.info(f"Message {message_id} copied to {imap_folder_name} and deleted from source")
+                else:
+                    raise move_error
+        except Exception as e:
+            self.logger.error(f"Failed to move message {message_id} to {imap_folder_name}: {e}")
+            raise
+    
+    def copy_message(self, message_id: int, target_folder: str) -> None:
+        """Copy a message to another folder."""
+        try:
+            # Convert forward slashes to dots for IMAP folder naming
+            imap_folder_name = target_folder.replace('/', '.')
+            self.client.copy([message_id], imap_folder_name)
+            self.logger.info(f"Message {message_id} copied to {imap_folder_name}")
+        except Exception as e:
+            self.logger.error(f"Failed to copy message {message_id} to {imap_folder_name}: {e}")
+            raise
+    
+    def mark_message(self, message_id: int, flag: str) -> None:
+        """Mark a message with a flag."""
+        try:
+            # Map common flag names to IMAP flags
+            flag_mapping = {
+                'read': '\\Seen',
+                'unread': '\\Unseen',
+                'flagged': '\\Flagged',
+                'unflagged': '\\Unflagged',
+                'answered': '\\Answered',
+                'deleted': '\\Deleted',
+                'draft': '\\Draft'
+            }
+            
+            imap_flag = flag_mapping.get(flag.lower(), flag)
+            self.client.set_flags([message_id], [imap_flag])
+            self.logger.info(f"Message {message_id} marked with {flag}")
+        except Exception as e:
+            self.logger.error(f"Failed to mark message {message_id} with {flag}: {e}")
+            raise
+    
     def disconnect(self) -> None:
         """Disconnect from IMAP server."""
         if self.client:
