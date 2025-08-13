@@ -382,6 +382,19 @@ Get a comprehensive overview of your setup:
 imapmessagefilter info
 ```
 
+##### Thunderbird Integration
+Extract settings and filters from Thunderbird:
+
+```bash
+# Extract IMAP server settings
+imapmessagefilter extract-config
+
+# Extract message filters
+imapmessagefilter extract-filters
+```
+
+These commands run the interactive extraction scripts and guide you through the process.
+
 ##### Filter Status
 Check the status of your filters:
 ```bash

@@ -75,6 +75,58 @@ def cli():
 
 
 @cli.command()
+def extract_config():
+    """Extract IMAP settings from Thunderbird configuration."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    
+    # Get the path to the extract script
+    script_path = Path(__file__).parent.parent / "extract_thunderbird_config.py"
+    
+    if not script_path.exists():
+        click.echo(f"Error: Extract script not found at {script_path}", err=True)
+        sys.exit(1)
+    
+    # Run the extract script
+    try:
+        result = subprocess.run([sys.executable, str(script_path)], check=True)
+        click.echo("✅ Thunderbird configuration extraction completed successfully!")
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Error running extraction script: {e}", err=True)
+        sys.exit(1)
+    except FileNotFoundError:
+        click.echo("Error: Python executable not found", err=True)
+        sys.exit(1)
+
+
+@cli.command()
+def extract_filters():
+    """Extract message filters from Thunderbird configuration."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    
+    # Get the path to the extract script
+    script_path = Path(__file__).parent.parent / "extract_thunderbird_filters.py"
+    
+    if not script_path.exists():
+        click.echo(f"Error: Extract script not found at {script_path}", err=True)
+        sys.exit(1)
+    
+    # Run the extract script
+    try:
+        result = subprocess.run([sys.executable, str(script_path)], check=True)
+        click.echo("✅ Thunderbird filter extraction completed successfully!")
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Error running extraction script: {e}", err=True)
+        sys.exit(1)
+    except FileNotFoundError:
+        click.echo("Error: Python executable not found", err=True)
+        sys.exit(1)
+
+
+@cli.command()
 def info():
     """Display comprehensive information about the IMAP Message Filter setup."""
     import subprocess
@@ -193,6 +245,8 @@ def info():
     click.echo("  Apply Filters: imapmessagefilter apply-filters --cron")
     click.echo("  Filter Status: imapmessagefilter filter-status")
     click.echo("  Test Filters: imapmessagefilter test-filters --dry-run")
+    click.echo("  Extract Config: imapmessagefilter extract-config")
+    click.echo("  Extract Filters: imapmessagefilter extract-filters")
     click.echo("  View Logs: tail -f ~/.local/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log")
     
     click.echo("\n🔗 Useful Commands:")
