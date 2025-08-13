@@ -204,6 +204,9 @@ def setup_config():
             'level': 'INFO',
             'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             'file': None
+        },
+        'filters': {
+            'filters_path': str(AppConfig.get_default_filters_path())
         }
     }
     

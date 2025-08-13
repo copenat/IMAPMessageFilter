@@ -57,11 +57,31 @@ class LoggingConfig(BaseModel):
         return v.upper()
 
 
+class FilterConfig(BaseModel):
+    """Configuration for filter management."""
+    
+    filters_path: str = Field(
+        str(Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml"),
+        description="Path to filters.yaml file"
+    )
+    
+    @field_validator('filters_path')
+    @classmethod
+    def validate_filters_path(cls, v: str) -> str:
+        """Validate filters path."""
+        path = Path(v)
+        if not path.parent.exists():
+            # Create parent directory if it doesn't exist
+            path.parent.mkdir(parents=True, exist_ok=True)
+        return str(path)
+
+
 class AppConfig(BaseSettings):
     """Main application configuration."""
     
     imap: IMAPServerConfig
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    filters: FilterConfig = Field(default_factory=FilterConfig)
     
     model_config = ConfigDict(
         env_prefix="IMAPMESSAGEFILTER_",
@@ -74,6 +94,11 @@ class AppConfig(BaseSettings):
     def get_default_config_path(cls) -> Path:
         """Get the default configuration file path."""
         return Path.home() / ".config" / "IMAPMessageFilter" / "config.yaml"
+    
+    @classmethod
+    def get_default_filters_path(cls) -> Path:
+        """Get the default filters file path."""
+        return Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml"
     
     @classmethod
     def load_config(cls, config_path: Optional[str] = None) -> "AppConfig":

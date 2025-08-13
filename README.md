@@ -222,7 +222,7 @@ uv run python main.py --help
 ### Configuration
 The application uses `~/.config/IMAPMessageFilter/` as the default configuration directory:
 
-- `config.yaml` - IMAP server settings and connection configuration
+- `config.yaml` - IMAP server settings, connection configuration, and filter paths
 - `filters.yaml` - Message filter rules (extracted from Thunderbird or manually created)
 
 #### Option 1: Extract from Thunderbird (Recommended)
@@ -271,6 +271,12 @@ The script is interactive and will guide you through the process step by step.
      password: "your-app-password"
      use_ssl: true
      timeout: 30
+   logging:
+     level: "INFO"
+     format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+     file: null
+   filters:
+     filters_path: "~/.config/IMAPMessageFilter/filters.yaml"  # Path to your filters file
    ```
 
 #### Common IMAP Server Settings
@@ -330,6 +336,20 @@ filters:
 - **Actions**: `move`, `delete`, `mark` (flag messages)
 - **Priority**: Control filter execution order
 - **Enabled/Disabled**: Toggle individual filters
+
+#### Filter Path Configuration
+The `filters_path` setting in `config.yaml` allows you to specify where your `filters.yaml` file is located:
+
+```yaml
+filters:
+  filters_path: "~/.config/IMAPMessageFilter/filters.yaml"  # Default location
+```
+
+You can customize this path to store your filters in a different location:
+```yaml
+filters:
+  filters_path: "/path/to/your/custom/filters.yaml"  # Custom location
+```
 
 ### Project Structure
 
