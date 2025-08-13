@@ -504,8 +504,9 @@ imapmessagefilter apply-filters
 
 **Cron Job Support:**
 - `--cron` - Enable cron mode (file logging, no console output)
-- Automatically creates log files in `~/.config/IMAPMessageFilter/logs/`
-- Includes log rotation (10MB max, 5 backup files)
+- Automatically creates daily log files in `~/.config/IMAPMessageFilter/logs/`
+- Daily log files: `imapmessagefilter.YYYYMMDD.log` (e.g., `imapmessagefilter.20250813.log`)
+- Includes log rotation (10MB max, 5 backup files per day)
 
 **Examples:**
 ```bash
@@ -585,16 +586,19 @@ crontab -e
 ```
 
 #### Log Monitoring
-Cron jobs create logs in `~/.config/IMAPMessageFilter/logs/`:
+Cron jobs create daily logs in `~/.config/IMAPMessageFilter/logs/`:
 ```bash
-# View recent logs
-tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.log
+# View today's logs
+tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
 
-# Check for errors
-grep ERROR ~/.config/IMAPMessageFilter/logs/imapmessagefilter.log
+# Check for errors in today's log
+grep ERROR ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
 
-# View log rotation
+# View all daily log files
 ls -la ~/.config/IMAPMessageFilter/logs/
+
+# View logs from a specific date
+cat ~/.config/IMAPMessageFilter/logs/imapmessagefilter.20250813.log
 ```
 
 ### Development

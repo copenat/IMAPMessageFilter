@@ -487,7 +487,9 @@ def apply_filters(config: Optional[Path], dry_run: bool, folder: str, limit: Opt
             app_config.logging.cron_mode = True
             # Set default log file if not specified
             if not app_config.logging.file:
-                app_config.logging.file = "~/.config/IMAPMessageFilter/logs/imapmessagefilter.log"
+                from datetime import datetime
+                today = datetime.now().strftime("%Y%m%d")
+                app_config.logging.file = f"~/.config/IMAPMessageFilter/logs/imapmessagefilter.{today}.log"
         setup_logging(app_config)
         
         logger = logging.getLogger(__name__)
