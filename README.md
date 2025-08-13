@@ -425,9 +425,49 @@ Test your filter rules against existing messages:
 uv run python main.py test-filters --dry-run
 ```
 
+**Options:**
+- `--dry-run` - Show what would be done without executing actions
+- `--limit N` - Test against only the N most recent messages
+- `--filter-name "Filter Name"` - Test only a specific filter
+
+**Examples:**
+```bash
+# Test all filters against 10 recent messages (dry run)
+uv run python main.py test-filters --dry-run --limit 10
+
+# Test only the HDFC filter against all messages (dry run)
+uv run python main.py test-filters --dry-run --filter-name "HDFC"
+
+# Test all filters against all messages (dry run)
+uv run python main.py test-filters --dry-run
+```
+
 ##### Apply Filters
 Apply filter rules to process messages:
 ```bash
+uv run python main.py apply-filters
+```
+
+**Filter Selection Options:**
+- `--filter-name "Filter Name"` - Apply only a specific filter (e.g., `--filter-name "HDFC"`)
+- Without `--filter-name` - Apply all enabled filters
+
+**Message Processing Options:**
+- `--limit N` - Process only the N most recent messages (e.g., `--limit 10`)
+- Without `--limit` - Process all messages in the folder
+
+**Examples:**
+```bash
+# Apply only the HDFC filter to the 5 most recent messages
+uv run python main.py apply-filters --filter-name "HDFC" --limit 5
+
+# Apply all filters to the 10 most recent messages
+uv run python main.py apply-filters --limit 10
+
+# Apply only the India Tax filter to all messages
+uv run python main.py apply-filters --filter-name "India Tax"
+
+# Apply all filters to all messages (full processing)
 uv run python main.py apply-filters
 ```
 
@@ -435,6 +475,30 @@ uv run python main.py apply-filters
 Check the status of your filters:
 ```bash
 uv run python main.py filter-status
+```
+
+#### Understanding Filter vs Message Selection
+
+**Filter Selection** (`--filter-name`):
+- Controls **which filter rules** to apply
+- Examples: `--filter-name "HDFC"`, `--filter-name "India Tax"`
+- When omitted: applies all enabled filters
+
+**Message Selection** (`--limit`):
+- Controls **how many emails** to process
+- Examples: `--limit 5`, `--limit 100`
+- When omitted: processes all messages in the folder
+
+**Combined Examples:**
+```bash
+# Apply only HDFC filter to 5 recent emails
+uv run python main.py apply-filters --filter-name "HDFC" --limit 5
+
+# Apply all filters to 10 recent emails  
+uv run python main.py apply-filters --limit 10
+
+# Apply only India Tax filter to ALL emails
+uv run python main.py apply-filters --filter-name "India Tax"
 ```
 
 ### Development
