@@ -86,7 +86,7 @@ uv run python main.py --help
 **Note:** With manual installation, you'll need to use `uv run python main.py` for all commands instead of the `imapmessagefilter` wrapper.
 
 ### Configuration
-The application uses `~/.config/IMAPMessageFilter/` as the default configuration directory:
+The application uses `~/.local/IMAPMessageFilter/` as the default configuration directory:
 
 - `config.yaml` - IMAP server settings, connection configuration, and filter paths
 - `filters.yaml` - Message filter rules (extracted from Thunderbird or manually created)
@@ -125,12 +125,12 @@ The script is interactive and will guide you through the process step by step.
 2. Edit the configuration file with your IMAP server settings:
    ```bash
    # Edit the configuration file
-   nano ~/.config/IMAPMessageFilter/config.yaml
+   nano ~/.local/IMAPMessageFilter/config.yaml
    ```
 
    Or use your preferred editor:
    ```bash
-   code ~/.config/IMAPMessageFilter/config.yaml
+   code ~/.local/IMAPMessageFilter/config.yaml
    ```
 
 3. Update the configuration with your actual settings:
@@ -147,7 +147,7 @@ The script is interactive and will guide you through the process step by step.
      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
      file: null
    filters:
-     filters_path: "~/.config/IMAPMessageFilter/filters.yaml"  # Path to your filters file
+     filters_path: "~/.local/IMAPMessageFilter/filters.yaml"  # Path to your filters file
    ```
 
 #### Common IMAP Server Settings
@@ -170,14 +170,14 @@ The logging section in `config.yaml` allows you to customize log behavior:
 logging:
   level: INFO                    # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  log_directory: "~/.config/IMAPMessageFilter/logs"  # Directory for log files
+     log_directory: "~/.local/IMAPMessageFilter/logs"  # Directory for log files
   file: null                     # Specific log file (null = use daily rotation)
   max_size: 10                   # Maximum log file size in MB
   backup_count: 5                # Number of backup files to keep
   cron_mode: false               # Enable cron-specific logging
 ```
 
-**Log Directory**: Configure where log files are stored. Default is `~/.config/IMAPMessageFilter/logs/`.
+**Log Directory**: Configure where log files are stored. Default is `~/.local/IMAPMessageFilter/logs/`.
 
 **Daily Rotation**: When `file` is set to `null` (default), logs are automatically rotated daily with filenames like `imapmessagefilter.20250813.log`.
 
@@ -198,7 +198,7 @@ This will:
 - Find your Thunderbird profiles automatically
 - Extract all message filter rules
 - Convert them to the application's YAML format
-- Save them to `~/.config/IMAPMessageFilter/filters.yaml`
+- Save them to `~/.local/IMAPMessageFilter/filters.yaml`
 
 **Supported platforms**: macOS, Linux, Windows
 
@@ -234,7 +234,7 @@ The `filters_path` setting in `config.yaml` allows you to specify where your `fi
 
 ```yaml
 filters:
-  filters_path: "~/.config/IMAPMessageFilter/filters.yaml"  # Default location
+       filters_path: "~/.local/IMAPMessageFilter/filters.yaml"  # Default location
 ```
 
 You can customize this path to store your filters in a different location:
@@ -475,19 +475,19 @@ crontab -e
 | Weekdays only | `0 9 * * 1-5` | Runs Monday-Friday at 9:00 AM |
 
 #### Log Monitoring
-Cron jobs create daily logs in the configured log directory (default: `~/.config/IMAPMessageFilter/logs/`):
+Cron jobs create daily logs in the configured log directory (default: `~/.local/IMAPMessageFilter/logs/`):
 ```bash
 # View today's logs
-tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
+tail -f ~/.local/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
 
 # Check for errors in today's log
-grep ERROR ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
+grep ERROR ~/.local/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log
 
 # View all daily log files
-ls -la ~/.config/IMAPMessageFilter/logs/
+ls -la ~/.local/IMAPMessageFilter/logs/
 
 # View logs from a specific date
-cat ~/.config/IMAPMessageFilter/logs/imapmessagefilter.20250813.log
+cat ~/.local/IMAPMessageFilter/logs/imapmessagefilter.20250813.log
 
 # Custom log directory (if configured differently)
 tail -f /path/to/custom/logs/imapmessagefilter.$(date +%Y%m%d).log
@@ -516,7 +516,7 @@ Please read the contributing guidelines before submitting pull requests.
 
 - ✅ **Thunderbird Filter Extraction**: Extract existing message filters from Thunderbird profiles
 - ✅ **Filter Format Conversion**: Convert Thunderbird format to application YAML format
-- ✅ **Filter Configuration**: Store filters in `~/.config/IMAPMessageFilter/filters.yaml`
+- ✅ **Filter Configuration**: Store filters in `~/.local/IMAPMessageFilter/filters.yaml`
 - ✅ **Filter Analysis**: Parse complex filter conditions and actions
 
 ### Next Steps: Phase 2 - Filter Engine Implementation
@@ -542,7 +542,7 @@ The next phase will implement the filter processing engine with:
 - CLI interface with connection testing and message listing
 - Comprehensive error handling and logging
 - **Thunderbird configuration extraction** - Extract IMAP settings from Thunderbird profiles
-- **External configuration management** - Store config in `~/.config/IMAPMessageFilter/`
+- **External configuration management** - Store config in `~/.local/IMAPMessageFilter/`
 
 ### Phase 2: Filter Engine & Thunderbird Integration ✅
 - **Thunderbird filter extraction** - Extract existing message filters from Thunderbird

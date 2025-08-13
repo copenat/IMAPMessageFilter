@@ -193,11 +193,11 @@ def info():
     click.echo("  Apply Filters: imapmessagefilter apply-filters --cron")
     click.echo("  Filter Status: imapmessagefilter filter-status")
     click.echo("  Test Filters: imapmessagefilter test-filters --dry-run")
-    click.echo("  View Logs: tail -f ~/.config/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log")
+    click.echo("  View Logs: tail -f ~/.local/IMAPMessageFilter/logs/imapmessagefilter.$(date +%Y%m%d).log")
     
     click.echo("\n🔗 Useful Commands:")
-    click.echo("  Edit Config: nano ~/.config/IMAPMessageFilter/config.yaml")
-    click.echo("  Edit Filters: nano ~/.config/IMAPMessageFilter/filters.yaml")
+    click.echo("  Edit Config: nano ~/.local/IMAPMessageFilter/config.yaml")
+    click.echo("  Edit Filters: nano ~/.local/IMAPMessageFilter/filters.yaml")
     click.echo("  View Cron: crontab -l")
     click.echo("  Edit Cron: crontab -e")
     
@@ -373,7 +373,7 @@ def setup_config():
         'logging': {
             'level': 'INFO',
             'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            'log_directory': str(Path.home() / ".config" / "IMAPMessageFilter" / "logs"),
+            'log_directory': str(Path.home() / ".local" / "IMAPMessageFilter" / "logs"),
             'file': None,
             'max_size': 10,
             'backup_count': 5,

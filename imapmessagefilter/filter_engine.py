@@ -186,7 +186,7 @@ class FilterEngine:
                 filters_path = str(Path.home()) + filters_path[1:]
             self.filters_path = filters_path
         else:
-            self.filters_path = str(Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml")
+            self.filters_path = str(Path.home() / ".local" / "IMAPMessageFilter" / "filters.yaml")
         self.filters: Optional[FilterConfig] = None
         self._load_filters()
     

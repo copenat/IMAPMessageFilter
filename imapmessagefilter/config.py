@@ -46,7 +46,7 @@ class LoggingConfig(BaseModel):
         description="Log format string"
     )
     log_directory: str = Field(
-        str(Path.home() / ".config" / "IMAPMessageFilter" / "logs"),
+        str(Path.home() / ".local" / "IMAPMessageFilter" / "logs"),
         description="Directory for log files"
     )
     file: Optional[str] = Field(None, description="Log file path (if None, uses daily rotation)")
@@ -68,7 +68,7 @@ class FilterConfig(BaseModel):
     """Configuration for filter management."""
     
     filters_path: str = Field(
-        str(Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml"),
+        str(Path.home() / ".local" / "IMAPMessageFilter" / "filters.yaml"),
         description="Path to filters.yaml file"
     )
     
@@ -100,12 +100,12 @@ class AppConfig(BaseSettings):
     @classmethod
     def get_default_config_path(cls) -> Path:
         """Get the default configuration file path."""
-        return Path.home() / ".config" / "IMAPMessageFilter" / "config.yaml"
+        return Path.home() / ".local" / "IMAPMessageFilter" / "config.yaml"
     
     @classmethod
     def get_default_filters_path(cls) -> Path:
         """Get the default filters file path."""
-        return Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml"
+        return Path.home() / ".local" / "IMAPMessageFilter" / "filters.yaml"
     
     @classmethod
     def load_config(cls, config_path: Optional[str] = None) -> "AppConfig":
