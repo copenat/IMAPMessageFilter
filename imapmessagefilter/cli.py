@@ -138,7 +138,6 @@ def info():
     # Configuration files
     click.echo("\n📁 Configuration Files:")
     config_path = AppConfig.get_default_config_path()
-    filters_path = AppConfig.get_default_filters_path()
     
     click.echo(f"  Config: {config_path}")
     if config_path.exists():
@@ -149,25 +148,58 @@ def info():
             click.echo(f"    Server: {app_config.imap.host}:{app_config.imap.port}")
             click.echo(f"    Username: {app_config.imap.username}")
             click.echo(f"    SSL: {'Yes' if app_config.imap.use_ssl else 'No'}")
+            
+            # Use filters_path from config
+            filters_path = Path(app_config.filters.filters_path).expanduser()
+            click.echo(f"  Filters: {filters_path}")
+            if filters_path.exists():
+                click.echo("    ✅ Exists")
+                # Count filters
+                try:
+                    import yaml
+                    with open(filters_path, 'r') as f:
+                        filters_data = yaml.safe_load(f)
+                        filter_count = len(filters_data.get('filters', []))
+                        click.echo(f"    Filters loaded: {filter_count}")
+                except Exception as e:
+                    click.echo(f"    ⚠️  Error reading filters: {e}")
+            else:
+                click.echo("    ❌ Not found")
+                
         except Exception as e:
             click.echo(f"    ⚠️  Error loading config: {e}")
+            # Fallback to default path if config can't be loaded
+            filters_path = AppConfig.get_default_filters_path()
+            click.echo(f"  Filters: {filters_path}")
+            if filters_path.exists():
+                click.echo("    ✅ Exists")
+                try:
+                    import yaml
+                    with open(filters_path, 'r') as f:
+                        filters_data = yaml.safe_load(f)
+                        filter_count = len(filters_data.get('filters', []))
+                        click.echo(f"    Filters loaded: {filter_count}")
+                except Exception as e:
+                    click.echo(f"    ⚠️  Error reading filters: {e}")
+            else:
+                click.echo("    ❌ Not found")
     else:
         click.echo("    ❌ Not found")
-    
-    click.echo(f"  Filters: {filters_path}")
-    if filters_path.exists():
-        click.echo("    ✅ Exists")
-        # Count filters
-        try:
-            import yaml
-            with open(filters_path, 'r') as f:
-                filters_data = yaml.safe_load(f)
-                filter_count = len(filters_data.get('filters', []))
-                click.echo(f"    Filters loaded: {filter_count}")
-        except Exception as e:
-            click.echo(f"    ⚠️  Error reading filters: {e}")
-    else:
-        click.echo("    ❌ Not found")
+        # Show default filters path if config doesn't exist
+        filters_path = AppConfig.get_default_filters_path()
+        click.echo(f"  Filters: {filters_path}")
+        if filters_path.exists():
+            click.echo("    ✅ Exists")
+            try:
+                import yaml
+                with open(filters_path, 'r') as f:
+                    filters_data = yaml.safe_load(f)
+                    filter_count = len(filters_data.get('filters', []))
+                    click.echo(f"    Filters loaded: {filter_count}")
+            except Exception as e:
+                click.echo(f"    ⚠️  Error reading filters: {e}")
+        else:
+            click.echo("    ❌ Not found")
     
     # Logging information
     click.echo("\n📊 Logging Information:")
