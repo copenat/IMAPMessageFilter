@@ -595,6 +595,9 @@ crontab -e
 
 # Or run every hour
 0 * * * * /home/username/bin/imapmessagefilter apply-filters --cron
+
+# Or run every 2 hours
+0 */2 * * * /home/username/bin/imapmessagefilter apply-filters --cron
 ```
 
 #### Advanced Cron Jobs
@@ -605,7 +608,26 @@ crontab -e
 
 # Process only recent messages (faster execution)
 */30 * * * * /home/username/bin/imapmessagefilter apply-filters --limit 50 --cron
+
+# Run every 2 hours with specific filter and message limit
+0 */2 * * * /home/username/bin/imapmessagefilter apply-filters --filter-name "HDFC" --limit 100 --cron
+
+# Run every 2 hours for all filters (comprehensive processing)
+0 */2 * * * /home/username/bin/imapmessagefilter apply-filters --cron
 ```
+
+#### Cron Timing Examples
+
+**Cron Format**: `minute hour day month weekday command`
+
+| Schedule | Cron Expression | Description |
+|----------|----------------|-------------|
+| Every 15 minutes | `*/15 * * * *` | Runs at :00, :15, :30, :45 of every hour |
+| Every hour | `0 * * * *` | Runs at the top of every hour |
+| Every 2 hours | `0 */2 * * *` | Runs at 00:00, 02:00, 04:00, etc. |
+| Every 6 hours | `0 */6 * * *` | Runs at 00:00, 06:00, 12:00, 18:00 |
+| Daily at 9 AM | `0 9 * * *` | Runs once daily at 9:00 AM |
+| Weekdays only | `0 9 * * 1-5` | Runs Monday-Friday at 9:00 AM |
 
 #### Log Monitoring
 Cron jobs create daily logs in the configured log directory (default: `~/.config/IMAPMessageFilter/logs/`):
