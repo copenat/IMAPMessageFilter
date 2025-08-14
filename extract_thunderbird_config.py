@@ -276,7 +276,7 @@ def main():
             }
         
         # Save to default config location
-        config_path = Path.home() / ".config" / "IMAPMessageFilter" / "config.yaml"
+        config_path = Path.home() / ".local" / "IMAPMessageFilter" / "config.yaml"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(config_path, 'w', encoding='utf-8') as f:
@@ -351,12 +351,12 @@ def main():
             'file': None
         },
         'filters': {
-            'filters_path': str(Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml")
+            'filters_path': str(Path.home() / ".local" / "IMAPMessageFilter" / "filters.yaml")
         }
     }
     
     # Save to default config location
-    config_path = Path.home() / ".config" / "IMAPMessageFilter" / "config.yaml"
+    config_path = Path.home() / ".local" / "IMAPMessageFilter" / "config.yaml"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(config_path, 'w', encoding='utf-8') as f:

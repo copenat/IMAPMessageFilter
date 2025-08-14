@@ -384,7 +384,7 @@ def main():
         yaml_filters = convert_to_yaml_format(all_filters)
     
     # Save to file
-    filters_path = Path.home() / ".config" / "IMAPMessageFilter" / "filters.yaml"
+    filters_path = Path.home() / ".local" / "IMAPMessageFilter" / "filters.yaml"
     filters_path.parent.mkdir(parents=True, exist_ok=True)
     
     import yaml

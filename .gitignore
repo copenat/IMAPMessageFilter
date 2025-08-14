@@ -46,6 +46,9 @@ venv.bak/
 *.swo
 *~
 
+# Prevent literal ~ folder from being created
+~/
+
 # OS
 .DS_Store
 .DS_Store?
